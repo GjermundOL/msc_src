@@ -8,6 +8,7 @@ module MasterTask
     include("Towers.jl")
     export BuildTower
     export BuildInverseTower
+    export elcost
 
     include("ExternalForces.jl")
     export GenerateExFs

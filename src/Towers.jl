@@ -49,6 +49,7 @@ function BuildTower(model::Model, nNodes::Integer, tWidth::𝕣, nHeight::𝕣, 
 
 end
 
+@once elcost(eleres,X,U,A,t,costargs) = 1/2*(eleres.ϵ - costargs.ϵₘ[costargs.eₙ])^2
 
 function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, Vₑₘ::Vector{Int64}, tWidth::𝕣, nHeight::𝕣, y_mod::𝕣, cs_area::𝕣, g::𝕣, mass::𝕣)
 
@@ -67,8 +68,7 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
         Vₑ = [e₁, e₂, e₃, e₄]
         Vᵤ = []
 
-        local eₙ = 0
-
+        
         if nNodes != 3
             
             for i = 3:nNodes
@@ -82,13 +82,12 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
                 
                 # Adding two new elements per node.
                 for j = 2:-1:1
-                    eₙ += 1
+
+                    eₙ = 2*i-j-3
 
                     if eₙ in Vₑₘ
-                        # flytt utenfor funksjon, sleng på costargs
-                        @once cost(eleres,X,U,A,t) = 1/2*(eleres.ϵ - ϵₘ[eₙ])^2
 
-                        eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(ϵ), cost=cost, 
+                        eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(ϵ), costargs=(ϵₘ = ϵₘ, eₙ = eₙ), cost=elcost, 
                                 ElementType=BarElement, elementkwargs=(y_mod, cs_area, g, mass))
 
                     else

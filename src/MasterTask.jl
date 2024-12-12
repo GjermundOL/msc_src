@@ -1,6 +1,7 @@
 module MasterTask
 
-    using  Printf,SparseArrays,StaticArrays,LinearAlgebra
+    #using  Printf,SparseArrays,StaticArrays,LinearAlgebra
+    using StaticArrays, LinearAlgebra
     
     include("BarElements.jl")
     export BarElement

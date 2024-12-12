@@ -49,7 +49,7 @@ function BuildTower(model::Model, nNodes::Integer, tWidth::𝕣, nHeight::𝕣, 
 
 end
 
-@once elcost(eleres,X,U,A,t,costargs) = 1/2*(eleres.ϵ - costargs.ϵₘ[costargs.eₙ])^2
+@once elcost(eleres,X,U,A,t;eₙ,ϵₘ) = 1/2*(eleres.ϵ - ϵₘ[eₙ])^2
 
 function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, Vₑₘ::Vector{Int64}, tWidth::𝕣, nHeight::𝕣, y_mod::𝕣, cs_area::𝕣, g::𝕣, mass::𝕣)
 

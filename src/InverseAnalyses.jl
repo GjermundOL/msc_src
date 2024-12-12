@@ -10,7 +10,11 @@ function InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, ϵₘ
     
     model           = Model(:TestModel) 
     
+    println("før")
+
     Vₙ, Vₑ, Vᵤ = BuildInverseTower(model, nNodes, ϵₘ, Vₑₘ, tWidth, nHeight, y_mod, cs_area, g, mass)
+
+    println("etter")
 
     initialstate    = initialize!(model) # Initializes model
 

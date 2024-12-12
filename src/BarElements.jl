@@ -24,7 +24,7 @@ end
 function BarElement(nod::Vector{Node}; y_mod::𝕣, cs_area::𝕣, g::𝕣, mass::𝕣)
     coords = coord(nod)
     Vₚ = coords[2]-coords[1]
-    length = sqrt(dot(Vₚ, Vₚ))
+    length = sqrt(LinearAlgebra.dot(Vₚ, Vₚ))
     axial_stiffness = y_mod*cs_area/length
     weight = g*mass*cs_area*length
     return BarElement(length, axial_stiffness, weight, Vₚ, coords)

@@ -12,5 +12,5 @@ function Draw(state, Title)
     fig = Figure()
     ax = Axis(fig[1, 1], yautolimitmargin = (0.1, 0.1), xautolimitmargin = (0.1, 0.1))
     draw(ax,state)
-    wait(display(fig))
+    #wait(display(fig))
 end

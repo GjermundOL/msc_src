@@ -19,7 +19,7 @@ function InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, ϵₘ
     initialstate    = initialize!(model) # Initializes model
 
 
-    state           = solve(SweepX{0};initialstate,time=[0.,1.],verbose=false)
+    state           = solve(SweepX{0};initialstate,time=[0.,1.])
 
     Draw(state[1], "Inverse analysis")
 

@@ -49,7 +49,7 @@ function BuildTower(model::Model, nNodes::Integer, tWidth::𝕣, nHeight::𝕣, 
 
 end
 
-@once elcost(eleres,X,U,A,t;eₙ,ϵₘ) = 1/2*(eleres.ϵ - ϵₘ[eₙ])^2
+@once cost(eleres,X,U,A,t,ϵₘ,eₙ) = 1/2*(eleres.ϵ - ϵₘ[eₙ])^2
 
 function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, Vₑₘ::Vector{Int64}, tWidth::𝕣, nHeight::𝕣, y_mod::𝕣, cs_area::𝕣, g::𝕣, mass::𝕣)
 
@@ -87,8 +87,8 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
 
                     if eₙ in Vₑₘ
 
-                        eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(ϵ), costargs=(ϵₘ = ϵₘ, eₙ = eₙ), cost=elcost, 
-                                ElementType=BarElement, elementkwargs=(y_mod, cs_area, g, mass))
+                        eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(ϵ), costargs=(ϵₘ = ϵₘ, eₙ = eₙ), cost=cost, 
+                                ElementType=BarElement, elementkwargs=(;y_mod, cs_area, g, mass))
 
                     else
                         eⱼ =    addelement!(model, BarElement, [Vₙ[i-j], nᵢ]; y_mod, cs_area, g, mass)
@@ -103,9 +103,11 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
                 # Add U-dof to model
                 # costargs?
                 # req?
-                uᵢₓ = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx1, Ufield=:utx1, cost=(u,t)->1/2*u^2)
-                uᵢy  = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx2, Ufield=:utx2, cost=(u,t)->1/2*u^2)
-                append!(Vᵤ, [uᵢ, uᵢy])
+                println("Før Udof")
+                uᵢˣ = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx1, Ufield=:utx1, cost=(u)->1/2*u^2)
+                uᵢʸ  = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx2, Ufield=:utx2, cost=(u)->1/2*u^2)
+                println("Etter Udof")
+                append!(Vᵤ, [uᵢˣ, uᵢʸ])
 
             end
         # If nNodes=3:
@@ -118,6 +120,8 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
             append!(Vₑ, [e₅, e₆])
 
             println("Tiny tower!")
+
+            Vᵤ = nothing
 
         end
         return Vₙ, Vₑ, Vᵤ

@@ -25,18 +25,18 @@ type = "test"
 scale = 1000000.
 const 𝕣 = Float64
 
-println("1")
+#println("1")
 state, ϵᵥ, Vₑₓ = ForwardAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, type, scale)
-println("2")
+#println("2")
 nₑₗₛ = (nNodes-2)*2
-println("3")
+#println("3")
 Vₑₓⁱⁿ  = [E.iele for E in Vₑₓ]
-println("4")
+#println("4")
 # Test 
 
 ## LEGG TIL MÅLEFEIL PÅ ϵₘ
 Vₑₘ = Vₑₓⁱⁿ
 ϵₘ = ϵᵥ 
-println("5")
+#println("5")
 inv_state = InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, ϵₘ, Vₑₘ)
-println("6")
+#println("6")

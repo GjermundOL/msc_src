@@ -20,8 +20,10 @@ function InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, ϵₘ
 
 
     state           = solve(SweepX{0};initialstate,time=[0.,1.])
-
-    Draw(state[1], "Inverse analysis")
+    println("typeof(state)", typeof(state))
+    Draw(state[1], "Inverse analysis 1")
+    Draw(state[2], "Inverse analysis 2")
+    
 
     return state
 end

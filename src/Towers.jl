@@ -49,9 +49,9 @@ function BuildTower(model::Model, nNodes::Integer, tWidth::𝕣, nHeight::𝕣, 
 
 end
 
-@once cost(eleres,X,U,A,t,ϵₘ,eₙ) = 1/2*(eleres.ϵ - ϵₘ[eₙ])^2
+@once cost(eleres,X,U,A,t,δLₘ,eₙ,β) = β/2*(eleres.δL - δLₘ[eₙ])^2
 
-function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, Vₑₘ::Vector{Int64}, tWidth::𝕣, nHeight::𝕣, y_mod::𝕣, cs_area::𝕣, g::𝕣, mass::𝕣)
+function BuildInverseTower(model::Model, nNodes::Integer, δLₘ::Vector{𝕣}, Vₑₘ::Vector{Int64}, β::𝕣, tWidth::𝕣, nHeight::𝕣, y_mod::𝕣, cs_area::𝕣, g::𝕣, mass::𝕣)
 
     if nNodes <= 2
         throw(ArgumentError("Tower must have at least two nodes."))
@@ -87,7 +87,9 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
 
                     if eₙ in Vₑₘ
 
-                        eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(ϵ), costargs=(ϵₘ = ϵₘ, eₙ = eₙ), cost=cost, 
+                        eₖ = findfirst(x->x==eₙ,Vₑₘ)
+                        println("typeof(eₖ): ", typeof(eₖ))
+                        eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(δL), costargs=(δLₘ = δLₘ, eₙ = eₖ, β = β), cost=cost, 
                                 ElementType=BarElement, elementkwargs=(;y_mod, cs_area, g, mass))
 
                     else
@@ -100,13 +102,11 @@ function BuildInverseTower(model::Model, nNodes::Integer, ϵₘ::Vector{𝕣}, V
                 
                 append!(Vₙ, [nᵢ])
 
-                # Add U-dof to model
-                # costargs?
-                # req?
-                println("Før Udof")
-                uᵢˣ = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx1, Ufield=:utx1, cost=(u)->1/2*u^2)
-                uᵢʸ  = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx2, Ufield=:utx2, cost=(u)->1/2*u^2)
-                println("Etter Udof")
+                
+                #println("Før Udof")
+                uᵢˣ = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx1, Ufield=:utx1, cost=(u,t)->1/2*u^2)
+                uᵢʸ  = addelement!(model, SingleUdof, [nᵢ]; Xfield=:tx2, Ufield=:utx2, cost=(u,t)->1/2*u^2)
+                #println("Etter Udof")
                 append!(Vᵤ, [uᵢˣ, uᵢʸ])
 
             end

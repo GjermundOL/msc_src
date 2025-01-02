@@ -48,8 +48,8 @@ Muscade.doflist(::Type{<:BarElement})=(inod=(1,1,2,2),class=ntuple(i->:X,4), fie
     Vₚᵗ = coord₂ - coord₁   # Vector from nᵢ to nⱼ 
     Lᵗ = norm(Vₚᵗ)    # Length of element
     ΔL = Lᵗ - o.length      # Difference in length compared to original length
-    ☼ϵ = ΔL/o.length        # Length change ratio
-    ☼Fₐ = o.axial_stiffness * ϵ   # Axial forces
+    ☼δL = ΔL/o.length        # Length change ratio
+    ☼Fₐ = o.axial_stiffness * δL   # Axial forces
     uₚᵗ = Vₚᵗ / Lᵗ          # Unit vector parallel to Vₚᵗ
 
     Fᵥ = Fₐ * uₚᵗ   # Force vector acting on node₂. Force vector acting on node₁ is -Fᵥ.

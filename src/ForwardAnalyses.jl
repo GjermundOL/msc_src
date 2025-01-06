@@ -6,17 +6,17 @@ using GLMakie
 
 const 𝕣 = Float64
 
-function ForwardAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, type, scale; displayTower=false, saveTower=false)
+function ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale; displayTower=false, saveTower=false)
 
 
     model           = Model(:TestModel) 
 
     println("BuildTower")
 
-    Vₙ, Vₑ = BuildTower(model, nNodes, tWidth, nHeight, y_mod, cs_area, g, mass)
+    Vₙ, Vₑ = BuildTower(model, nNodes, tWidth, nHeight, E, cs_area, g, mass)
     println("GenerateExFs")
 
-    Fᵁ = GenerateExFs(nNodes, type, scale) # Endre tittel
+    Fᵁ = GenerateExFs(nNodes, ex_type, ex_scale) # Endre tittel
 
     println("ApplyExFs")
     Vₑᵁ  = ApplyExFs(model, nNodes, Vₙ, Fᵁ)
@@ -42,8 +42,8 @@ function ForwardAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, type,
     ## GLMakie ##
     #println("Draw")
 
-    println("Fᵁ: ", Fᵁ)
-    Draw(state[1], "Forward analysis"; displayTower = displayTower, saveTower = saveTower)
+    #println("Fᵁ: ", Fᵁ)
+    DrawTower(state[1], "Forward analysis"; displayTower = displayTower, saveTower = saveTower)
 
-    return state, δLᵥ, Vₑₓ
+    return state, δLᵥ, Vₑₓ, Fᵁ, Vₑᵁ
 end 

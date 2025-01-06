@@ -5,66 +5,61 @@ using MasterTask
 using GLMakie
 using DelimitedFiles
 
-
-# cross secitonal area (m²)
-cs_area = 0.01 #eksempel
-# Young's modulus - Steel
-y_mod = 200e9
-# mass - Steel (kg/m³)
-mass = 7850.
-# standard acceleration of gravity
-g = 9.81
-# Number of nodes in the tower
-nNodes = 4
-# Width of tower
-tWidth = 2.0
-# Distance between two vertically connected nodes. Distance between n₁ and n₃ is nHeight/2. 
-nHeight=2.0
-# Type of external forces
-type = "test"
-# Scale of external forces
-scale = 1.e2
-# Relative standard deviation of external forces
-σᵤʳᵉˡ = 1
-# Standard deviation of external forces
-σᵤ = scale*σᵤʳᵉˡ
-# Relative standard deviation of measurements
-σₗ = 1e-8
+displayTower = false
+saveTower = false
+saveResults = true
+displayError = true
+saveError = true
 
 const 𝕣 = Float64
 
+#structure = "test"
+structure = "100_nodes"
+measurements = "tenth"
 
+cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σᵤʳᵉˡ, σᵤ, σₗ = Structure(structure)
 
+state, δLᶠ, Vₑₓ, Fᵁᶠ, Vₑᵁ = ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale; displayTower = displayTower, saveTower = saveTower)
+#println("δLᶠ: ", δLᶠ)
+# bar element numbers for all free nodes
+Vₑₓⁱⁿ  = [El.iele for El in Vₑₓ]
 
-#println("1")
-state, δLᵥ, Vₑₓ = ForwardAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, type, scale; displayTower=false, saveTower=false)
-#println("2")
-Vₑₓⁱⁿ  = [E.iele for E in Vₑₓ]
-#println("3")
-
-println("δL fra framover: ", δLᵥ)
-
-# Adding measurement error to δLᵥ
-δLₑᵣᵣ = [randn()*σₗ + i for i in δLᵥ]
-
-# absolute deviation of measurements
-#σₗ = abs.(δLᵥ-δLₑᵣᵣ)
+# Adding measurement error to δLᶠ
+δLₑᵣᵣ = [randn()*σₗ + i for i in δLᶠ]
 
 # β = 1/α 
 β = σᵤ^2 /σₗ^2
 
-# Measuring every other element
-Vₑₘ = Vₑₓⁱⁿ[1:2:length(Vₑₓⁱⁿ)]
-δLₘ = δLₑᵣᵣ[1:2:length(δLₑᵣᵣ)]
-#β  = βᵗᵉᵐᵖ[1:2:length(βᵗᵉᵐᵖ)]
+Vₑₘ, δLₘ = MeasuredElements(measurements, Vₑₓ, δLₑᵣᵣ)
 
-# Measuring every element
-#Vₑₘ = Vₑₓⁱⁿ
-#δLₘ = δLₑᵣᵣ
-#β  = βᵗᵉᵐᵖ
+stateXUA, δLⁱ, Fᵁⁱ  = InverseAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, δLₘ, Vₑₘ, β; displayTower = displayTower, saveTower = saveTower)
 
-#println("4")
-stateXUA = InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, δLₘ, Vₑₘ, β; displayTower=false, saveTower=false)
-#println("5")
+# Measurement error
+ΔδL = abs.(δLᶠ - δLⁱ)
+ΔδL∞  = norm(ΔδL, Inf)
+ΔδL₂ = norm(ΔδL, 2)
+#println("ΔδL: ", ΔδL)
+println("ΔδL∞: ", ΔδL∞)
+println("ΔδL₂: ", ΔδL₂)
+
+
+# External forces error
+ΔFᵁ = abs.(Fᵁᶠ-Fᵁⁱ)
+ΔFᵁ∞ = norm(ΔFᵁ, Inf)
+ΔFᵁ₂ = norm(ΔFᵁ, 2)
+#println("ΔFᵁ: ", ΔFᵁ)
+println("ΔFᵁ∞: ", ΔFᵁ∞)
+println("ΔFᵁ₂: ", ΔFᵁ₂)
+
+
+
+# Drawing error
+# plotte i forhold til σ's 
+
+if saveResults
+    SaveResults(structure, measurements, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ)
+end
+
+DrawErrors(structure, measurements, σₗ, σᵤ, ΔδL∞, ΔδL₂, ΔFᵁ∞, ΔFᵁ₂; displayError = displayError, saveError = saveError)
 
 println("Ferdig")

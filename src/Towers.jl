@@ -88,7 +88,7 @@ function BuildInverseTower(model::Model, nNodes::Integer, δLₘ::Vector{𝕣}, 
                     if eₙ in Vₑₘ
 
                         eₖ = findfirst(x->x==eₙ,Vₑₘ)
-                        println("typeof(eₖ): ", typeof(eₖ))
+
                         eⱼ =    addelement!(model, ElementCost, [Vₙ[i-j], nᵢ]; req=@request(δL), costargs=(δLₘ = δLₘ, eₙ = eₖ, β = β), cost=cost, 
                                 ElementType=BarElement, elementkwargs=(;y_mod, cs_area, g, mass))
 

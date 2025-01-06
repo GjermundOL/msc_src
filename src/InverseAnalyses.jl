@@ -6,11 +6,11 @@ using GLMakie
 
 const 𝕣 = Float64
 
-function InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, δLₘ, Vₑₘ, β; displayTower=false, saveTower=false)
+function InverseAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, δLₘ, Vₑₘ, β; displayTower=false, saveTower=false)
     
     model           = Model(:TestModel) 
 
-    Vₙ, Vₑ, Vᵤ = BuildInverseTower(model, nNodes, δLₘ, Vₑₘ, β, tWidth, nHeight, y_mod, cs_area, g, mass)
+    Vₙ, Vₑ, Vᵤ = BuildInverseTower(model, nNodes, δLₘ, Vₑₘ, β, tWidth, nHeight, E, cs_area, g, mass)
 
     initialstate    = initialize!(model) # Initializes model
 
@@ -24,19 +24,27 @@ function InverseAnalysis(cs_area, y_mod, mass, g, nNodes, tWidth, nHeight, δL�
 
     #t = 2
     #println("ExtractMeasurements")
-    for t=1:14
+    
 
-        #δLᵥ = ExtractMeasurements(stateXUA, Vₑ,t)
-        #println("δLᵥ: ", δLᵥ)
-    end
+    δLᵥ = ExtractMeasurements(stateXUA, Vₑ,1)
+    
     
 
     #println("Typeof(inverse state): ", typeof(state))
     #println("inverse state[1]: ", state[5])
     #println("typeof(state)", typeof(state))
     #Draw(state[1], "Inverse analysis 1")
-    Draw(stateXUA[2], "Inverse analysis, step 3"; displayTower = displayTower, saveTower = saveTower)
+    DrawTower(stateXUA[2], "Inverse analysis, step 3"; displayTower = displayTower, saveTower = saveTower)
     
 
-    return stateXUA
+    #U = stateXUA[1].U
+    #println("U: ", U)
+
+    Fᵁᵢₙᵥᶸᵗˣ¹ = getdof(stateXUA[1];class=:U,field=:utx1)
+    Fᵁᵢₙᵥᶸᵗˣ² = getdof(stateXUA[1];class=:U,field=:utx2)
+    Fᵁᵢₙᵥ = collect(Iterators.flatten(zip(Fᵁᵢₙᵥᶸᵗˣ¹, Fᵁᵢₙᵥᶸᵗˣ²)))
+
+    #println("Fᵁᵢₙᵥ: ", Fᵁᵢₙᵥ)
+
+    return stateXUA, δLᵥ, Fᵁᵢₙᵥ
 end

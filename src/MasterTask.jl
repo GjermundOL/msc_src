@@ -23,8 +23,17 @@ module MasterTask
 
     include("Extractions.jl")
     export ExtractMeasurements
+    export MeasuredElements
 
     include("Drawings.jl")
-    export Draw
+    export DrawTower
+    export DrawErrors
+
+    include("Structures.jl")
+    export Structure
+
+    include("Results.jl")
+    export SaveResults
+    export GenerateFileName
 
 end

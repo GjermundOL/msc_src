@@ -11,21 +11,21 @@ function ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, 
 
     model           = Model(:TestModel) 
 
-    println("BuildTower")
+    #println("BuildTower")
 
     Vₙ, Vₑ = BuildTower(model, nNodes, tWidth, nHeight, E, cs_area, g, mass)
-    println("GenerateExFs")
+    #println("GenerateExFs")
 
     Fᵁ = GenerateExFs(nNodes, ex_type, ex_scale) # Endre tittel
 
-    println("ApplyExFs")
+    #println("ApplyExFs")
     Vₑᵁ  = ApplyExFs(model, nNodes, Vₙ, Fᵁ)
 
-    println("initialize!")
+    #println("initialize!")
     initialstate    = initialize!(model) # Initializes model
 
 
-    println("solve")
+    #println("solve")
     state           = solve(SweepX{0};initialstate,time=[0.,1.])
 
     #println("getdof")

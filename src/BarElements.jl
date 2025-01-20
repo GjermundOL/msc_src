@@ -14,7 +14,7 @@ const 𝕣 = Float64
 #når jeg tilfører element, kaller den funksjonen BarElement
 struct BarElement <:AbstractElement
     length:: 𝕣
-    axial_stiffness:: 𝕣 #google youngs modulus, youngs*areal/lengde
+    axial_stiffness:: 𝕣 # youngs*areal/lengde
     weight:: 𝕣
     Vₚ :: Vector{𝕣} 
     coords :: Vector{Vector{Float64}}

@@ -2,14 +2,6 @@ using Muscade
 using StaticArrays
 using LinearAlgebra
 
-function ExtractMeasurement(state, Vₑ::Vector{Muscade.EleID},t::Int64)
-    
-    req = @request δL
-    eleres = getresult(state, req, Vₑ[5:length(Vₑ)])
-    ax_strains = [k.δL for k in eleres[:,t]]
-
-    return ax_strains
-end
 
 function ExtractMeasurements(state, Vₑ::Vector{Muscade.EleID},t::Int64)
     #req = @request δL
@@ -102,3 +94,74 @@ function MeasuredElements(measurements, Vₑₓ, δLₑᵣᵣ)
 
     return Vₑₘ, δLₘ
 end
+
+function ExtractForces(state, Vₑₓ, Fᵁ, nNodes; t = 2)
+    
+    req = @request F
+    Fₜₒₜ = zeros(𝕣, 2*nNodes)
+    
+
+    for E in Vₑₓ
+
+        # eleobj
+        eleobj_typ = typeof(state[t].model.eleobj[E.ieletyp][E.iele])
+        #println("eleobj : ", eleobj_typ )
+        #println("typeof(eleobj): ", eleobj_typ)
+
+
+        if eleobj_typ == BarElement
+
+            #println("innenfor if-statement BarElement")
+
+            nods = state[t].model.ele[E].nodID
+
+            nodsₙᵣ = [i.inod for i in nods]
+
+            eleres = getresult(state[t], req, [E])
+            
+            # Forces on element E
+            Fₑ = eleres[1].F
+
+            # Forces on nod 1 in element E
+            Fₑ¹ = Fₑ[1:2]
+            # Forces on nod 2 in element E
+            Fₑ² = Fₑ[3:4]
+
+            Fₜₒₜ[nodsₙᵣ[1]*2-1] += Fₑ¹[1]
+            Fₜₒₜ[nodsₙᵣ[1]*2] += Fₑ¹[2]
+            Fₜₒₜ[nodsₙᵣ[2]*2-1] += Fₑ²[1]
+            Fₜₒₜ[nodsₙᵣ[2]*2] += Fₑ²[2]
+
+        elseif eleobj_typ <: ElementCost
+
+            #println("innenfor if-statement ElementCost")
+            
+            eleres = getresult(state[t], @request(eleres), [E])
+            
+            Fₑ = eleres[1].eleres.F
+            # Forces on nod 1 in element E
+            Fₑ¹ = Fₙₛ[1:2]
+            # Forces on nod 2 in element E
+            Fₑ² = Fₙₛ[3:4]
+            
+            Fₜₒₜ[nodsₙᵣ[1]*2-1] += Fₑ¹[1]
+            Fₜₒₜ[nodsₙᵣ[1]*2] += Fₑ¹[2]
+            Fₜₒₜ[nodsₙᵣ[2]*2-1] += Fₑ²[1]
+            Fₜₒₜ[nodsₙᵣ[2]*2] += Fₑ²[2]
+        end
+    end
+
+    #sjekk tegn, print før og etter og sjekk
+    Fₜₒₜ = Fₜₒₜ[5:length(Fₜₒₜ)] + Fᵁ
+
+    return Fₜₒₜ
+end
+
+#function ExtractMeasurement(state, Vₑ::Vector{Muscade.EleID},t::Int64)
+    
+#    req = @request δL
+#    eleres = getresult(state, req, Vₑ[5:length(Vₑ)])
+#    ax_strains = [k.δL for k in eleres[:,t]]
+
+#    return ax_strains
+#end

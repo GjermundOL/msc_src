@@ -16,7 +16,7 @@ function GenerateFileName(structure, measurements, dir_path, filetype)
     end
 end
 
-function SaveResults(structure, measurements, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ)
+function SaveResults(structure, measurements, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ, ΔδL, ΔδL∞, ΔδL₂, ΔFᵁ, ΔFᵁ∞, ΔFᵁ₂, σᵤ∞ˢ, σᵤ₂ˢ, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ)
     
     #println(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ)
 
@@ -46,6 +46,16 @@ function SaveResults(structure, measurements, cs_area, E, mass, g, nNodes, tWidt
         println(file, "δLⁱ:\t", δLⁱ)
         println(file, "Fᵁᶠ:\t", Fᵁᶠ)
         println(file, "Fᵁⁱ:\t", Fᵁⁱ)
+        println(file, "ΔδL:\t", ΔδL)
+        println(file, "ΔδL∞:\t", ΔδL∞)
+        println(file, "ΔδL₂:\t", ΔδL₂)
+        println(file, "ΔFᵁ:\t", ΔFᵁ)
+        println(file, "ΔFᵁ∞:\t", ΔFᵁ∞)
+        println(file, "ΔFᵁ₂:\t", ΔFᵁ₂)
+        println(file, "σᵤ∞ˢ:\t", σᵤ∞ˢ)
+        println(file, "σᵤ₂ˢ:\t", σᵤ₂ˢ)
+        println(file, "ΔFᵁ∞ˢ:\t", ΔFᵁ∞ˢ)
+        println(file, "ΔFᵁ₂ˢ:\t", ΔFᵁ₂ˢ)
         
     end
 end

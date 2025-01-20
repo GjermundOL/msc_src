@@ -24,10 +24,13 @@ module MasterTask
     include("Extractions.jl")
     export ExtractMeasurements
     export MeasuredElements
+    export ExtractForces
 
     include("Drawings.jl")
     export DrawTower
     export DrawErrors
+    export DrawDiscrepancy
+    export DrawLCurve
 
     include("Structures.jl")
     export Structure

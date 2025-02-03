@@ -28,9 +28,12 @@ module MasterTask
 
     include("Drawings.jl")
     export DrawTower
-    export DrawErrors
+    export DrawSingleErrors
     export DrawDiscrepancy
     export DrawLCurve
+    export DrawSingleBar
+    export DrawRegStrat
+    export DrawErrors
 
     include("Structures.jl")
     export Structure
@@ -38,5 +41,9 @@ module MasterTask
     include("Results.jl")
     export SaveResults
     export GenerateFileName
+    export GenerateFolderName
+
+    include("Tests.jl")
+    export TestRegStrat
 
 end

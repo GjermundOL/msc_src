@@ -88,6 +88,12 @@ function MeasuredElements(measurements, Vₑₓ, δLₑᵣᵣ)
     elseif measurements == "tenth"
         Vₑₘ = Vₑₓⁱⁿ[1:10:length(Vₑₓⁱⁿ)]
         δLₘ = δLₑᵣᵣ[1:10:length(δLₑᵣᵣ)]
+    elseif measurements == "twentyfifth"
+        Vₑₘ = Vₑₓⁱⁿ[1:25:length(Vₑₓⁱⁿ)]
+        δLₘ = δLₑᵣᵣ[1:25:length(δLₑᵣᵣ)]
+    elseif measurements == "single"
+        Vₑₘ = [Vₑₓⁱⁿ[14]]
+        δLₘ = [δLₑᵣᵣ[14]]
     else
         throw(ArgumentError("No measurment method with name ", measurements, "."))
     end

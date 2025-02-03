@@ -6,7 +6,7 @@ using GLMakie
 
 const 𝕣 = Float64
 
-function ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale; displayTower=false, saveTower=false)
+function ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, folder_name, folder_path; displayTower=false, saveTower=false, drawForces = false)
 
 
     model           = Model(:TestModel) 
@@ -26,7 +26,7 @@ function ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, 
 
 
     #println("solve")
-    state           = solve(SweepX{0};initialstate,time=[0.,1.])
+    state           = solve(SweepX{0};initialstate,time=[0.,1.], maxiter = 100)
 
     #println("getdof")
     #tx1,_           = getdof(state,field=:tx1,nodID=[Vₙ[3]]) # Returns: dofresidual, dofID
@@ -43,7 +43,14 @@ function ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, 
     #println("Draw")
 
     #println("Fᵁ: ", Fᵁ)
-    DrawTower(state[1], "Forward analysis"; displayTower = displayTower, saveTower = saveTower)
+    
+    if displayTower || saveTower
+        if drawForces
+            DrawTower(state[1], "Forward analysis", folder_name, folder_path, "forward"; displayTower = displayTower, saveTower = saveTower, externalForces = Fᵁ, externalElements = Vₑᵁ, ex_scale = ex_scale)
+        else
+            DrawTower(state[1], "Forward analysis", folder_name, folder_path, "forward"; displayTower = displayTower, saveTower = saveTower)
+        end
+    end
 
     return state, δLᵥ, Vₑₓ, Fᵁ, Vₑᵁ
 end 

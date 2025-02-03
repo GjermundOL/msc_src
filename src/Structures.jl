@@ -61,6 +61,34 @@ function Structure(name)
         σᵤ = ex_scale*σᵤʳᵉˡ
         σₗ = 1.e-7
 
+    elseif name == "100_nodes_test2"
+        cs_area = 0.01 
+        E = 200e9 # Steel
+        mass = 7850. # Steel
+        g = 9.81
+        nNodes = 100
+        tWidth = 2.0
+        nHeight=2.0
+        ex_type = "test"
+        ex_scale = 1.e4
+        σᵤʳᵉˡ = 1.
+        σᵤ = ex_scale*σᵤʳᵉˡ
+        σₗ = 1.e-6
+
+    elseif name == "100_nodes_test_soft"
+        cs_area = 0.01 
+        E = 200e7 # dunno
+        mass = 1000. # dunno
+        g = 9.81
+        nNodes = 100
+        tWidth = 2.0
+        nHeight=2.0
+        ex_type = "test"
+        ex_scale = 1.e4
+        σᵤʳᵉˡ = 1.
+        σᵤ = ex_scale*σᵤʳᵉˡ
+        σₗ = 1.e-4
+
     elseif name == "50_nodes"
         cs_area = 0.01 
         E = 200e9 # Steel
@@ -103,6 +131,20 @@ function Structure(name)
         σᵤ = ex_scale*σᵤʳᵉˡ
         σₗ = 1.e-7
 
+    elseif name == "draw_tower_50"
+        cs_area = 0.01 
+        E = 200e9 # Steel
+        mass = 7850. # Steel
+        g = 9.81
+        nNodes = 50
+        tWidth = 2.0
+        nHeight=2.0
+        ex_type = "test"
+        ex_scale = 1.e4
+        σᵤʳᵉˡ = 1.
+        σᵤ = ex_scale*σᵤʳᵉˡ
+        σₗ = 1.e-6
+
     elseif name == "draw_tower_20"
         cs_area = 0.01 
         E = 200e9 # Steel
@@ -112,7 +154,7 @@ function Structure(name)
         tWidth = 2.0
         nHeight=2.0
         ex_type = "test"
-        ex_scale = 1.e3
+        ex_scale = 1.e4
         σᵤʳᵉˡ = 1.
         σᵤ = ex_scale*σᵤʳᵉˡ
         σₗ = 1.e-6

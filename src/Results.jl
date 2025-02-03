@@ -3,11 +3,11 @@ using StaticArrays
 using LinearAlgebra
 using MasterTask
 
-function GenerateFileName(structure, measurements, dir_path, filetype)
+function GenerateFileName(Title, dir_path, filetype)
     file_nr = 1
     free_nr = false
     while !free_nr
-        file_name = "$(structure)_$(measurements)_$(file_nr)$(filetype)"
+        file_name = "$(Title)_$(file_nr)$(filetype)"
         if !isfile(abspath(joinpath(dir_path, file_name)))
             return file_name
         else
@@ -16,16 +16,28 @@ function GenerateFileName(structure, measurements, dir_path, filetype)
     end
 end
 
-function SaveResults(structure, measurements, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ, ΔδL, ΔδL∞, ΔδL₂, ΔFᵁ, ΔFᵁ∞, ΔFᵁ₂, σᵤ∞ˢ, σᵤ₂ˢ, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ)
-    
-    #println(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ)
+function GenerateFolderName(structure, measurements, ρ, Nʳʰᴼ, dir_path)
+    folder_nr = 1
+    free_nr = false
 
-    dir_path = "./results/logs"
+    rho = replace("$(ρ)", "." => "o")
+    
+    while !free_nr
+        folder_name = "$(structure)__$(measurements)__rho_$(rho)__Nrho_$(Nʳʰᴼ)__$(folder_nr)"
+        if !isdir(abspath(joinpath(dir_path, folder_name)))
+            return folder_name
+        else
+            folder_nr += 1
+        end
+    end
+end
+
+function SaveResults(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ, ΔδL, ΔδL∞, ΔδL₂, ΔFᵁ, ΔFᵁ∞, ΔFᵁ₂, σᵤ∞ˢ, σᵤ₂ˢ, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ)
+    
+
+    dir_path = abspath(joinpath(folder_path, "logs"))
     mkpath(dir_path)
-    
-    #files = [f for f in readdir(dir_path) if ]
-
-    file_name = GenerateFileName(structure, measurements, dir_path, ".txt")
+    file_name = GenerateFileName("log__phi_$(ϕ)", dir_path, ".txt")
 
     full_path = abspath(joinpath(dir_path, file_name))
     
@@ -42,6 +54,9 @@ function SaveResults(structure, measurements, cs_area, E, mass, g, nNodes, tWidt
         println(file, "σₗ:\t", σₗ)
         println(file, "σᵤʳᵉˡ:\t", σᵤʳᵉˡ)
         println(file, "σᵤ:\t", σᵤ)
+        println(file, "ϕ:\t", ϕ)
+        println(file, "ρ:\t", ρ)
+        println(file, "Nʳʰᴼ:\t", Nʳʰᴼ)
         println(file, "δLᶠ:\t", δLᶠ)
         println(file, "δLⁱ:\t", δLⁱ)
         println(file, "Fᵁᶠ:\t", Fᵁᶠ)

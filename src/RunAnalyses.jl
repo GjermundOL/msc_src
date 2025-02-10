@@ -8,340 +8,251 @@ using StatsBase
 
 const 𝕣 = Float64
 
-
 function RunSingleAnalysis(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ; displayTower = false, saveTower = false, drawForces = false, saveResults = false, displayError = false, saveError = false)
 
-    cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σᵤʳᵉˡ, σᵤ, σₗ = Structure(structure)
+    Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σᶠʳᵉˡ, σᶠ, σˢ = Structure(structure)
 
-    state, δLᶠ, Vₑₓ, Fᵁᶠ, Vₑᵁ = ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, folder_name, folder_path; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
+    state, Sᵗ, Vₑₓ, Fᴱᶠ, Vₑᶠ = ForwardAnalysis(Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, ex_type, ex_scale, folder_name, folder_path; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
 
-
-    # Adding measurement error to δLᶠ
-    δLₑᵣᵣ = [randn()*σₗ + i for i in δLᶠ]
+    Sₑᵣᵣ = [randn()*σˢ + i for i in Sᵗ]
 
     # β = 1/α 
-    β = σᵤ^2 /(σₗ^2 * ϕ)
+    β = σᶠ^2 /(σˢ^2 * ϕ)
 
-    Vₑₘ, δLₘ = MeasuredElements(measurements, Vₑₓ, δLₑᵣᵣ)
+    Vₑₘ, Sᵐ, Sᵐ⁻¹ = MeasuredElements(measurements, Vₑₓ, Sₑᵣᵣ)
 
-    stateXUA, δLⁱ, Fᵁⁱ  = InverseAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, δLₘ, Vₑₘ, β, ex_scale, folder_name, folder_path, ϕ; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
+    stateXUA, Sⁱ, Fᴱⁱ  = InverseAnalysis(Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, Sᵐ, Vₑₘ, β, ex_scale, folder_name, folder_path, ϕ; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
 
-    Vₑₘ, δLʳᵉᶜ = MeasuredElements(measurements, Vₑₓ, δLⁱ)
+    Vₑₘ, Sʳ, Sʳ⁻¹ = MeasuredElements(measurements, Vₑₓ, Sⁱ)
 
-    η = sqrt(length(δLʳᵉᶜ)) * σₗ
+    η = sqrt(length(Sʳ)) * σˢ
 
-    Fᴱˢᶜᵃˡᵉ = sqrt(nNodes-2)*ex_scale
+    Fᴱₛ = sqrt(nNodes-2)*ex_scale 
 
-    # total forces in forward analysis
-    Fᶠₜₒₜ = ExtractForces(state, Vₑₓ, Fᵁᶠ, nNodes)
+    Fᶠₜₒₜ = ExtractForces(state, Vₑₓ, Fᴱᶠ, nNodes)
     Fᶠₜₒₜ∞ = norm(Fᶠₜₒₜ, Inf)
     Fᶠₜₒₜ₂ = norm(Fᶠₜₒₜ, 2)
 
+    ΔS = abs.(Sᵗ - Sⁱ)
+    ΔS∞  = norm(ΔS, Inf)
+    ΔS₂ = norm(ΔS, 2)
 
-    # Measurement error
-    ΔδL = abs.(δLᶠ - δLⁱ)
-    ΔδL∞  = norm(ΔδL, Inf)
-    ΔδL₂ = norm(ΔδL, 2)
-    #println("ΔδL: ", ΔδL)
-    #println("ΔδL∞: ", ΔδL∞)
-    #println("ΔδL₂: ", ΔδL₂)
+    ΔFᴱ = abs.(Fᴱᶠ-Fᴱⁱ)
+    ΔFᴱ∞ = round(norm(ΔFᴱ, Inf); digits = 3)
+    ΔFᴱ₂ = round(norm(ΔFᴱ, 2); digits = 3)
 
-
-    # Unscaled external forces error
-    ΔFᵁ = abs.(Fᵁᶠ-Fᵁⁱ)
-    ΔFᵁ∞ = round(norm(ΔFᵁ, Inf); digits = 3)
-    ΔFᵁ₂ = round(norm(ΔFᵁ, 2); digits = 3)
-    #println("ΔFᵁ: ", ΔFᵁ)
-
-    # Scaled external forces error
-    σᵤ∞ˢ = σᵤ/Fᶠₜₒₜ∞
-    σᵤ₂ˢ = σᵤ/Fᶠₜₒₜ₂
-    ΔFᵁ∞ˢ = ΔFᵁ∞/Fᶠₜₒₜ∞
-    ΔFᵁ₂ˢ = ΔFᵁ₂/Fᶠₜₒₜ₂
-
-    #println("ΔFᵁ∞: ", ΔFᵁ∞)
-    #println("ΔFᵁ₂: ", ΔFᵁ₂)
-
-
-
-    # Drawing error
-    # plotte i forhold til σ's 
+    σᶠ∞ₛ = σᶠ/Fᶠₜₒₜ∞
+    σᶠ₂ₛ = σᶠ/Fᶠₜₒₜ₂
+    ΔFᴱ∞ₛ = ΔFᴱ∞/Fᶠₜₒₜ∞
+    ΔFᴱ₂ₛ = ΔFᴱ₂/Fᶠₜₒₜ₂
 
     if saveResults
-        SaveResults(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ, ΔδL, ΔδL∞, ΔδL₂, ΔFᵁ, ΔFᵁ∞, ΔFᵁ₂, σᵤ∞ˢ, σᵤ₂ˢ, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ)
+        SaveResults(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ, Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σˢ, σᶠʳᵉˡ, σᶠ, Sᵗ, Sⁱ, Fᴱᶠ, Fᴱⁱ, ΔS, ΔS∞, ΔS₂, ΔFᴱ, ΔFᴱ∞, ΔFᴱ₂, σᶠ∞ₛ, σᶠ₂ₛ, ΔFᴱ∞ₛ, ΔFᴱ₂ₛ)
     end
 
-    DrawSingleErrors(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ, σₗ, σᵤ∞ˢ, σᵤ₂ˢ, ΔδL∞, ΔδL₂, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ; displayError = displayError, saveError = saveError)
+    DrawSingleErrors(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ, σˢ, σᶠ∞ₛ, σᶠ₂ₛ, ΔS∞, ΔS₂, ΔFᴱ∞ₛ, ΔFᴱ₂ₛ; displayError = displayError, saveError = saveError)
 
-return σₗ, σᵤ∞ˢ, σᵤ₂ˢ, ΔδL∞, ΔδL₂, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ, Vₑₘ, δLₘ, δLʳᵉᶜ, η, Fᴱˢᶜᵃˡᵉ, Fᵁⁱ
+return σˢ, σᶠ∞ₛ, σᶠ₂ₛ, ΔS∞, ΔS₂, ΔFᴱ∞ₛ, ΔFᴱ₂ₛ, Vₑₘ, Sᵐ, Sʳ, η, Fᴱₛ, Fᴱⁱ
 end
 
-function RunFullAnalysis(structure, measurements, ϕᵥ, ρ, Nʳʰᴼ, folder_name, folder_path; displayTower = false, saveTower = false, drawForces = false, saveResults = false, displayError = false, saveError = false, displayDiscrepancy = false, saveDiscrepancy = false, displayLCurve = false, saveLCurve = false, testRegStrat = false)
+function RunFullAnalysis(structure, measurementsᵥ, ρ, Nʳʰᴼ, nˢᵗᵉᵖˢ; displayTower = false, saveTower = false, drawForces = false, saveResults = false, displayError = false, saveError = false, displayDiscrepancy = false, saveDiscrepancy = false, displayLCurve = false, saveLCurve = false, testRegStrat = false)
     
-    if testRegStrat
-        σᵥ = [0.5^n for n=-30:1:30]
-        TestRegStrat(structure, measurements, σᵥ, folder_name, folder_path; displayRegStrat = false, saveRegStrat = true)
-    end
-
-    ϕ_acceptable = []
-
-    R₂ᵥ = []
-
-    δLʳᵉᶜ₂ᵥ = []
-
-    Fᵁⁱ₂ᵥ = []
-
-    ϕᵃᶜᵗᶸᵃˡ = []
-
-    Fᴱⁱᵥ = []
-
-    ΔδL₂ˢᵥ = []
-
-    ΔFᴱ₂ˢᵥ = []
+    dir_path = abspath(joinpath("./results/", "$(ρ)"))
+    folder_name = GenerateFolderName(structure, "forward", ρ, Nʳʰᴼ, dir_path)
+    folder_path = abspath(joinpath(dir_path, folder_name))
+    mkpath(folder_path)
     
-    cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σᵤʳᵉˡ, σᵤ, σₗ = Structure(structure)
+    Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σᶠʳᵉˡ, σᶠ, σˢ = Structure(structure)
 
-    state, δLᶠ, Vₑₓ, Fᵁᶠ, Vₑᵁ = ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, folder_name, folder_path; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
+    state, Sᵗ, Vₑₓ, Fᴱᶠ, Vₑᶠ = ForwardAnalysis(Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, ex_type, ex_scale, folder_name, folder_path; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
 
-    state⁰, δLᶠ⁰, Vₑₓ⁰, Fᵁᶠ⁰, Vₑᵁ⁰ = ForwardAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, 0., folder_name, folder_path; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
-
-    # Adding measurement error to δLᶠ
-    δLₑᵣᵣ = [randn()*σₗ + i for i in δLᶠ]
-
-    Vₑₘ, δLₘ = MeasuredElements(measurements, Vₑₓ, δLₑᵣᵣ)
-
-    ηᵟᴸ = sqrt(length(δLₘ)) * σₗ
-    ηᶠᵉ = sqrt(nNodes-2) * σᵤ
-
-    for ϕ in ϕᵥ
-
-        println("ϕ før: ", ϕ)
-        #global η
-        #global Fᴱˢᶜᵃˡᵉ
-
-        try
-            # β = 1/α 
-            β = ηᶠᵉ^2 /(ηᵟᴸ^2 * ϕ)
-            println("Før inverse")
-            stateXUA, δLⁱ, Fᵁⁱ  = InverseAnalysis(cs_area, E, mass, g, nNodes, tWidth, nHeight, δLₘ, Vₑₘ, β, ex_scale, folder_name, folder_path, ϕ; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
-            println("etter inverse")
-            Vₑₘ, δLʳᵉᶜ = MeasuredElements(measurements, Vₑₓ, δLⁱ)
+    state⁰, Sᵗ⁰, Vₑₓ⁰, Fᴱᶠ⁰, Vₑᶠ⁰ = ForwardAnalysis(Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, "test", 0., folder_name, folder_path)
+    
+    for measurements in measurementsᵥ
         
-            println("før errorhandling")
-            
-            # Reconstructed error
-            ΔδL₂ = norm(δLᶠ-δLⁱ, 2)
-            ΔδL⁰₂ = norm(δLᶠ-δLᶠ⁰, 2)
-            ΔδL₂ˢᶜᵃˡᵉᵈ  = ΔδL₂/ΔδL⁰₂
-            append!(ΔδL₂ˢᵥ, ΔδL₂ˢᶜᵃˡᵉᵈ)
+        dir_path = abspath(joinpath("./results/", "$(ρ)"))
+        folder_name = GenerateFolderName(structure, measurements, ρ, Nʳʰᴼ, dir_path)
+        folder_path = abspath(joinpath(dir_path, folder_name))
+        mkpath(folder_path)
 
-            # Scaled external forces error
-            ΔFᴱ₂ = norm(Fᵁᶠ-Fᵁⁱ, 2)
-            ΔFᴱ₂ˢᶜᵃˡᵉᵈ = ΔFᴱ₂/ηᶠᵉ
-            append!(ΔFᴱ₂ˢᵥ, ΔFᴱ₂ˢᶜᵃˡᵉᵈ)
-
-            # Drawing error
-            # plotte i forhold til σ's 
-            println("før saveresults")
-            if saveResults
-                SaveResults(structure, measurements, folder_name, folder_path, ϕ, ρ, Nʳʰᴼ, cs_area, E, mass, g, nNodes, tWidth, nHeight, ex_type, ex_scale, σₗ, σᵤʳᵉˡ, σᵤ, δLᶠ, δLⁱ, Fᵁᶠ, Fᵁⁱ, ΔδL, ΔδL∞, ΔδL₂, ΔFᵁ, ΔFᵁ∞, ΔFᵁ₂, σᵤ∞ˢ, σᵤ₂ˢ, ΔFᵁ∞ˢ, ΔFᵁ₂ˢ)
-            end
-        
-            # residal
-            R = δLʳᵉᶜ - δLₘ
-            println("etter drawerrors")
-            # Norm of residual
-            R₂ = norm(R, 2)
-            δLʳᵉᶜ₂ = norm(δLʳᵉᶜ, 2)
-            Fᵁⁱ₂ = norm(Fᵁⁱ, 2)
-
-            append!(R₂ᵥ, R₂)
-            append!(δLʳᵉᶜ₂ᵥ, δLʳᵉᶜ₂)
-            append!(Fᵁⁱ₂ᵥ, Fᵁⁱ₂)
-            append!(ϕᵃᶜᵗᶸᵃˡ, [ϕ])
-            push!(Fᴱⁱᵥ, Fᵁⁱ)
-            println("etter push")
-            if R₂ < ηᵟᴸ
-                #println("R₂ < η")
-                #println("ϕ: ", ϕ)
-                #println("R₂: ", R₂)
-                #println("η: ", η)
-                append!(ϕ_acceptable, ["Y"])
-            else
-                #println("R₂ !< η")
-                #println("ϕ: ", ϕ)
-                #println("R₂: ", R₂)
-                #println("η: ", η)
-                append!(ϕ_acceptable, ["N"])
-            end
-            println("klarte det")
-        catch
-            println("ϕ: ", ϕ)
-            continue
+        if testRegStrat
+            αᵥ = [0.5^n for n=-50:1:50]
+            TestRegStrat(structure, measurements, αᵥ, folder_name, folder_path; displayRegStrat = false, saveRegStrat = true)
+            σᵥ = [0.5^n for n=-50:1:50]
+            TestRegStratParameter(structure, measurements, σᵥ, folder_name, folder_path; displayRegStrat = false, saveRegStrat = true)
         end
 
+        r₂ᵥ = []
+
+        Sʳ₂ᵥ = []
+
+        Fᴱⁱ₂ᵥ = []
+
+        ϕᵃᶜᵗᶸᵃˡ = []
+
+        nᵃᶜᵗᶸᵃˡ = []
+
+        Fᴱⁱᵥ = []
+
+        ΔSᵐ₂ₛᵥ = []
+
+        ΔSᵐ⁻¹₂ₛᵥ = []
+
+        ΔFᴱ₂ₛᵥ = [] 
         
+        Sₑᵣᵣ = [randn()*σˢ + i for i in Sᵗ] 
+
+        Vₑₘ, Sᵐ, Sᵐ⁻¹ = MeasuredElements(measurements, Vₑₓ, Sₑᵣᵣ)
+
+        ηˢ = sqrt(length(Sᵐ)) * σˢ
+        ηᶠ = sqrt(nNodes-2) * σᶠ 
+
+        α₀ = ηˢ^2 / ηᶠ^2
+
+        nᵥ = [n for n in -Nʳʰᴼ:nˢᵗᵉᵖˢ:Nʳʰᴼ]
+
+        for n in nᵥ
+
+            ϕ = ρ^n
+
+            try
+                # β = 1/α 
+                β = 1 /(α₀ * ϕ)
+
+                stateXUA, Sⁱ, Fᴱⁱ  = InverseAnalysis(Aᶜˢ, E, density, g, nNodes, tWidth, nHeight, Sᵐ, Vₑₘ, β, ex_scale, folder_name, folder_path, ϕ; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces)
+
+                Sʳ, Sʳ⁻¹ = MeasuredElements(measurements, Vₑₓ, Sⁱ)[2:3]
+            
+                Sᵗᵐ, Sᵗᵐ⁻¹ = MeasuredElements(measurements, Vₑₓ, Sᵗ)[2:3]
+                Sᵗ⁰ᵐ, Sᵗ⁰ᵐ⁻¹ = MeasuredElements(measurements, Vₑₓ, Sᵗ⁰)[2:3]
+
+                ΔSᵐ₂ = norm(Sᵗᵐ-Sʳ, 2)
+                ΔS⁰ᵐ₂ = norm(Sᵗᵐ-Sᵗ⁰ᵐ, 2)
+                ΔSᵐ₂ₛ  = ΔSᵐ₂/ΔS⁰ᵐ₂
+                append!(ΔSᵐ₂ₛᵥ, ΔSᵐ₂ₛ)
+
+                if measurements == "every"
+                    append!(ΔSᵐ⁻¹₂ₛᵥ, NaN)
+                else
+                    ΔSᵐ⁻¹₂ = norm(Sᵗᵐ⁻¹-Sʳ⁻¹, 2)
+                    ΔSᵐ⁻¹⁰₂ = norm(Sᵗᵐ⁻¹-Sᵗ⁰ᵐ⁻¹, 2)
+                    ΔSᵐ⁻¹₂ₛ  = ΔSᵐ⁻¹₂/ΔSᵐ⁻¹⁰₂
+                    append!(ΔSᵐ⁻¹₂ₛᵥ, ΔSᵐ⁻¹₂ₛ)
+                end
+
+                ΔFᴱ₂ = norm(Fᴱᶠ-Fᴱⁱ, 2)
+                ΔFᴱ₂ₛ = ΔFᴱ₂/ηᶠ
+                append!(ΔFᴱ₂ₛᵥ, ΔFᴱ₂ₛ)
+
+                r = Sʳ - Sᵐ
+                r₂ = norm(r, 2)
+                Sʳ₂ = norm(Sʳ, 2)
+                Fᴱⁱ₂ = norm(Fᴱⁱ, 2)
+
+                append!(r₂ᵥ, r₂)
+                append!(Sʳ₂ᵥ, Sʳ₂)
+                append!(Fᴱⁱ₂ᵥ, Fᴱⁱ₂)
+                append!(ϕᵃᶜᵗᶸᵃˡ, [ϕ])
+                append!(nᵃᶜᵗᶸᵃˡ, [n])
+                push!(Fᴱⁱᵥ, Fᴱⁱ)
+            catch
+                println("ϕ: ", ϕ)
+                continue
+            end
+
+            
+
+        end
+
+        Fᴱⁱ₂ᵥₛ = Fᴱⁱ₂ᵥ./ηᶠ
+        r₂ᵥₛ = r₂ᵥ./ηˢ 
+
+        logFᴱⁱ₂ᵥₛ = log10.(Fᴱⁱ₂ᵥₛ)
+        logr₂ᵥₛ = log10.(r₂ᵥₛ)
+        logϕᵃᶜᵗᶸᵃˡ = log10.(ϕᵃᶜᵗᶸᵃˡ)
+        logΔSᵐ₂ₛ = log10.(ΔSᵐ₂ₛᵥ)
+        logΔSᵐ⁻¹₂ₛ = log10.(ΔSᵐ⁻¹₂ₛᵥ)
+        logΔFᴱ₂ₛ = log10.(ΔFᴱ₂ₛᵥ)
+
+        indʳᵉᵐᴼᵛᵉ₁ = findall(x->x> 0.5 + logr₂ᵥₛ[1], logr₂ᵥₛ)
+        indᵩᶠˡᵃᵗ = findfirst(x->x<-5, logϕᵃᶜᵗᶸᵃˡ)
+        indʳᵉᵐᴼᵛᵉ₂ = findall(x->x> 0.1 + logFᴱⁱ₂ᵥₛ[indᵩᶠˡᵃᵗ], logFᴱⁱ₂ᵥₛ)
+        if length(indʳᵉᵐᴼᵛᵉ₂)>= 1
+            indʳᵉᵐᴼᵛᵉ₃ = collect(Int64, indʳᵉᵐᴼᵛᵉ₂[1]:length(logFᴱⁱ₂ᵥₛ))
+        else
+            indʳᵉᵐᴼᵛᵉ₃ = []
+        end
+
+        append!(indʳᵉᵐᴼᵛᵉ₁, indʳᵉᵐᴼᵛᵉ₂)
+        append!(indʳᵉᵐᴼᵛᵉ₁, indʳᵉᵐᴼᵛᵉ₃)
+
+        indʳᵉᵐᴼᵛᵉ = [key for (key, val) in countmap(indʳᵉᵐᴼᵛᵉ₁)]
+        sort!(indʳᵉᵐᴼᵛᵉ)
+
+        deleteat!(ϕᵃᶜᵗᶸᵃˡ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(nᵃᶜᵗᶸᵃˡ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(r₂ᵥ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(Fᴱⁱ₂ᵥ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(Fᴱⁱᵥ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(ΔSᵐ₂ₛᵥ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(ΔSᵐ⁻¹₂ₛᵥ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(ΔFᴱ₂ₛᵥ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(logFᴱⁱ₂ᵥₛ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(logr₂ᵥₛ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(logϕᵃᶜᵗᶸᵃˡ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(logΔSᵐ₂ₛ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(logΔSᵐ⁻¹₂ₛ, indʳᵉᵐᴼᵛᵉ)
+        deleteat!(logΔFᴱ₂ₛ, indʳᵉᵐᴼᵛᵉ)
+
+        try
+            global indᶠᵉ₋₀ = max(findfirst(x->x>0, logFᴱⁱ₂ᵥₛ)-1,1)
+        catch
+            global indᶠᵉ₋₀ = NaN
+        end
+
+        try
+            global indᴿ₋₀ = findfirst(x->x<0, logr₂ᵥₛ)
+        catch
+            global indᴿ₋₀ = NaN
+        end
+
+        QOⁱⁿᵈᵉˣ = QuasiOptimality(logϕᵃᶜᵗᶸᵃˡ, logFᴱⁱ₂ᵥₛ, Fᴱⁱᵥ)
+
+        indΔSᵐₘᵢₙ = argmin(ΔSᵐ₂ₛᵥ)
+        indΔSᵐ⁻¹ₘᵢₙ = argmin(ΔSᵐ⁻¹₂ₛᵥ)
+        indΔFᴱₘᵢₙ = argmin(ΔFᴱ₂ₛᵥ)
+
+        DrawErrors(structure, measurements, folder_name, folder_path, logϕᵃᶜᵗᶸᵃˡ, indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ, logΔSᵐ₂ₛ, logΔSᵐ⁻¹₂ₛ, logΔFᴱ₂ₛ; displayError = displayError, saveError = saveError)
+        DrawDiscrepancy(structure, measurements, folder_name, folder_path, ρ, Nʳʰᴼ, logϕᵃᶜᵗᶸᵃˡ, logr₂ᵥₛ, logFᴱⁱ₂ᵥₛ, (ηˢ/ηˢ), indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ; displayDiscrepancy = displayDiscrepancy, saveDiscrepancy = saveDiscrepancy)
+        DrawLCurve(structure, measurements, folder_name, folder_path, ρ, Nʳʰᴼ, ϕᵃᶜᵗᶸᵃˡ, logFᴱⁱ₂ᵥₛ, logr₂ᵥₛ, indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ; displayLCurve = displayLCurve, saveLCurve = saveLCurve)
+        SaveFullResults(structure, measurements, folder_name, folder_path, α₀, ηˢ, ηᶠ, ρ, Nʳʰᴼ, nᵃᶜᵗᶸᵃˡ, ϕᵃᶜᵗᶸᵃˡ, r₂ᵥₛ, Fᴱⁱ₂ᵥₛ, ΔSᵐ₂ₛᵥ, ΔSᵐ⁻¹₂ₛᵥ, ΔFᴱ₂ₛᵥ, indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ, indΔSᵐₘᵢₙ, indΔSᵐ⁻¹ₘᵢₙ, indΔFᴱₘᵢₙ)
 
     end
-    println("etter inverse")
-    #remove completely wrong results
-
-    #####################
-    #Fᵁⁱ₂ᵥᵐᵉᵈⁱᵃⁿ = median(Fᵁⁱ₂ᵥ)
-    #indʳᵉᵐᴼᵛᵉ₁ = findall(x->x>1.e-3, R₂ᵥ)
-    
-    #Passer til n = 50 nodes, ex_scale = 100
-    #indʳᵉᵐᴼᵛᵉ₁ = findall(x->x>1.e4, R₂ᵥ)
-    #indʳᵉᵐᴼᵛᵉ₂ = findall(x->x>1.e3, Fᵁⁱ₂ᵥ)
-    #indʳᵉᵐᴼᵛᵉ₃ = findall(x->x<1.e-8, R₂ᵥ)
-
-    # n = 100 nodes, ex_scale = 1000
-    #indʳᵉᵐᴼᵛᵉ₁ = findall(x->x>2.e-2, R₂ᵥ)
-    #indʳᵉᵐᴼᵛᵉ₂ = findall(x->x>1.e4, Fᵁⁱ₂ᵥ)
-    #indʳᵉᵐᴼᵛᵉ₃ = findall(x->x<1.e-10, R₂ᵥ)
-
-        
-    #Passer til n = 100 nodes, ex_scale = 100
-    indʳᵉᵐᴼᵛᵉ₁ = findall(x->x>1.e4, R₂ᵥ)
-    indʳᵉᵐᴼᵛᵉ₂ = findall(x->x>1.e4, Fᵁⁱ₂ᵥ)
-    indʳᵉᵐᴼᵛᵉ₃ = findall(x->x<1.e-8, R₂ᵥ)
-
-    println("etter indremove")
-    #indʳᵉᵐᴼᵛᵉ₁ = []
-    #indʳᵉᵐᴼᵛᵉ₂ = []
-    #indʳᵉᵐᴼᵛᵉ₃ = []
-
-    #println("Fᵁⁱ₂ᵥᵐᵉᵈⁱᵃⁿ: ", Fᵁⁱ₂ᵥᵐᵉᵈⁱᵃⁿ)
-    #println("Fᵁⁱ₂ᵥ before: ", Fᵁⁱ₂ᵥ)
-    #println(indʳᵉᵐᴼᵛᵉ₁)
-    #println(indʳᵉᵐᴼᵛᵉ₂)
-
-    append!(indʳᵉᵐᴼᵛᵉ₁, indʳᵉᵐᴼᵛᵉ₂)
-    append!(indʳᵉᵐᴼᵛᵉ₁, indʳᵉᵐᴼᵛᵉ₃)
-
-    indʳᵉᵐᴼᵛᵉ = [key for (key, val) in countmap(indʳᵉᵐᴼᵛᵉ₁)]
-    sort!(indʳᵉᵐᴼᵛᵉ)
-    #println("length(ϕᵥ): ", length(ϕᵥ))
-    #println("length(indʳᵉᵐᴼᵛᵉ): ", length(indʳᵉᵐᴼᵛᵉ))
-
-    #println(indʳᵉᵐᴼᵛᵉ)
-
-    ####################
-    println("etter indremove2bogaloo")
-
-    #indʳᵉᵐᴼᵛᵉ = findall(x->x>1.e-3, R₂ᵥ)
-    println("length(ϕᵃᶜᵗᶸᵃˡ): ", length(ϕᵃᶜᵗᶸᵃˡ))
-    deleteat!(ϕᵃᶜᵗᶸᵃˡ, indʳᵉᵐᴼᵛᵉ)
-    deleteat!(R₂ᵥ, indʳᵉᵐᴼᵛᵉ)
-    deleteat!(Fᵁⁱ₂ᵥ, indʳᵉᵐᴼᵛᵉ)
-    deleteat!(Fᴱⁱᵥ, indʳᵉᵐᴼᵛᵉ)
-    deleteat!(ΔδL₂ˢᵥ, indʳᵉᵐᴼᵛᵉ)
-    deleteat!(ΔFᴱ₂ˢᵥ, indʳᵉᵐᴼᵛᵉ)
-    println("etter delete")
-    println("length(ϕᵃᶜᵗᶸᵃˡ): ", length(ϕᵃᶜᵗᶸᵃˡ))
-
-    # Quasi-optimality:
-    Fᴱⁱˢᵈ = Fᴱⁱᵥ[1:end-1] - Fᴱⁱᵥ[2:end]
-    Fᴱⁱˢᵈ₂  = [norm(i, 2) for i in Fᴱⁱˢᵈ]
-    QOⁱⁿᵈᵉˣ = argmin(Fᴱⁱˢᵈ₂)+1
-
-
-    Fᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ = Fᵁⁱ₂ᵥ./ηᶠᵉ
-    R₂ᵥˢᶜᵃˡᵉᵈ = R₂ᵥ./ηᵟᴸ
-
-    println("etter scale")
-
-    #println("length(ϕᵃᶜᵗᶸᵃˡ) after removing: ", length(ϕᵃᶜᵗᶸᵃˡ))
-
-    #println("R₂ᵥ after: ", R₂ᵥ)
-
-    #println("Fᵁⁱ₂ᵥ after: ", Fᵁⁱ₂ᵥ)
-    #println("Fᵁⁱ₂ᵥ/Median: ", Fᵁⁱ₂ᵥ./Fᵁⁱ₂ᵥᵐᵉᵈⁱᵃⁿ)
-
-
-    #println("ϕᵥ: ", ϕᵥ)
-    #println("ϕ_acceptable: ", ϕ_acceptable)
-
-    logFᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ = log10.(Fᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ)
-    logR₂ᵥˢᶜᵃˡᵉᵈ = log10.(R₂ᵥˢᶜᵃˡᵉᵈ)
-    logϕᵃᶜᵗᶸᵃˡ = log10.(ϕᵃᶜᵗᶸᵃˡ)
-    logΔδL₂ˢ = log10.(ΔδL₂ˢᵥ)
-    logΔFᴱ₂ˢ = log10.(ΔFᴱ₂ˢᵥ)
-
-    indᶠᵉ₋₀ = max(findfirst(x->x>0, logFᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ)-1,1)
-    indᴿ₋₀ = findfirst(x->x<0, logR₂ᵥˢᶜᵃˡᵉᵈ)
-
-    #ϕᶠᵉ₋₀ = ϕᵃᶜᵗᶸᵃˡ[indᶠᵉ₋₀]
-    #ϕᵟᴸ₋₀ = ϕᵃᶜᵗᶸᵃˡ[indᴿ₋₀]
-
-    #Fᴱ₋₀ = logFᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ[indᶠᵉ₋₀]
-    #R₋₀ = logR₂ᵥˢᶜᵃˡᵉᵈ[indᴿ₋₀]
-    DrawErrors(structure, measurements, folder_name, folder_path, logϕᵃᶜᵗᶸᵃˡ, indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ, logΔδL₂ˢ, logΔFᴱ₂ˢ; displayError = displayError, saveError = saveError)
-    println("før discr")
-    DrawDiscrepancy(structure, measurements, folder_name, folder_path, ρ, Nʳʰᴼ, ϕᵃᶜᵗᶸᵃˡ, R₂ᵥˢᶜᵃˡᵉᵈ, Fᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ, ηᵟᴸ/ηᵟᴸ, indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ; displayDiscrepancy = displayDiscrepancy, saveDiscrepancy = saveDiscrepancy)
-    println("før lcurve")
-    DrawLCurve(structure, measurements, folder_name, folder_path, ρ, Nʳʰᴼ, ϕᵃᶜᵗᶸᵃˡ, logFᵁⁱ₂ᵥˢᶜᵃˡᵉᵈ, logR₂ᵥˢᶜᵃˡᵉᵈ, indᶠᵉ₋₀, indᴿ₋₀, QOⁱⁿᵈᵉˣ; displayLCurve = displayLCurve, saveLCurve = saveLCurve)
-    println("Ferdig")
-
 end
 
-
 displayTower = false
-saveTower = false
-drawForces = false
-saveResults = false # Må evnt skrive om til å ta for seg flere kjøringer per log
+saveTower = true
+drawForces = true
+saveResults = true
 displayError = false 
 saveError = true
 displayDiscrepancy = false
 saveDiscrepancy = true
 displayLCurve = false
 saveLCurve = true
-testRegStrat = false
+testRegStrat = true
 
-#structure = "test"
-#structure = "draw_tower_50"
-#structure = "20_nodes"
-structure = "100_nodes"
-#structure = "50_nodes"
-#structure = "100_nodes_test"
-#structure = "100_nodes_test_soft"
-#structure = "100_nodes_test2"
-#measurements = "tenth"
-measurements = "second"
-#measurements = "every"
-#measurements = "twentyfifth"
-#measurements = "single"
+structure = "100_nodes_random"
 
-#ρ  = 0.5
-#ρᵥ  = collect(0.1:0.1:0.9)
+
+measurementsᵥ = ["every", "tenth", "thirtyfifth", "tenth_most_low", "tenth_low", "thirtyfifth_most_low", "thirtyfifth_low", "thirtyfifth_very_low"]
+
 ρᵥ = [0.9]
 
 Nʳʰᴼ = 200
 
+nˢᵗᵉᵖˢ = 2
+
 for ρ in ρᵥ
-
-ϕᵥ = [ρ^n for n in -Nʳʰᴼ:5:Nʳʰᴼ]
-
-#ϕᵥ = [ρ]
-
-#Creating folder for figures
-dir_path = "./results/"
-folder_name = GenerateFolderName(structure, measurements, ρ, Nʳʰᴼ, dir_path)
-folder_path = abspath(joinpath(dir_path, folder_name))
-mkpath(folder_path)
-
-RunFullAnalysis(structure, measurements, ϕᵥ, ρ, Nʳʰᴼ, folder_name, folder_path; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces, saveResults = saveResults, displayError = displayError, saveError = saveError, displayDiscrepancy = displayDiscrepancy, saveDiscrepancy = saveDiscrepancy, displayLCurve = displayLCurve, saveLCurve = saveLCurve, testRegStrat = testRegStrat)
-
-#σᵥ = [0.5^n for n=-30:1:30]
-
-#TestRegStrat(structure, measurements, σᵥ, folder_name, folder_path; displayRegStrat = false, saveRegStrat = true)
-
-#DrawSingleBar(folder_name, folder_path;displayBar = true, saveBar = true)
-
-#println("log||Fᴱ|| > 0 at ϕ = ", ϕᵃᶜᵗᶸᵃˡ[indᶠᵉ₋₀+1])
-#println("log||R|| < 0 at ϕ = ", ϕᵃᶜᵗᶸᵃˡ[indᴿ₋₀])
-
-#println("log||Fᴱ|| < 0 at ϕ = ", ϕᵃᶜᵗᶸᵃˡ[indᶠᵉ₋₀])
-#println("log||R|| > 0 at ϕ = ", ϕᵃᶜᵗᶸᵃˡ[indᴿ₋₀-1])
-
+        RunFullAnalysis(structure, measurementsᵥ, ρ, Nʳʰᴼ, nˢᵗᵉᵖˢ; displayTower = displayTower, saveTower = saveTower, drawForces = drawForces, saveResults = saveResults, displayError = displayError, saveError = saveError, displayDiscrepancy = displayDiscrepancy, saveDiscrepancy = saveDiscrepancy, displayLCurve = displayLCurve, saveLCurve = saveLCurve, testRegStrat = testRegStrat)
 end

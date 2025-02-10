@@ -1,6 +1,5 @@
 module MasterTask
 
-    #using  Printf,SparseArrays,StaticArrays,LinearAlgebra
     using StaticArrays, LinearAlgebra
     
     include("BarElements.jl")
@@ -33,6 +32,7 @@ module MasterTask
     export DrawLCurve
     export DrawSingleBar
     export DrawRegStrat
+    export DrawRegStratParameter
     export DrawErrors
 
     include("Structures.jl")
@@ -42,8 +42,12 @@ module MasterTask
     export SaveResults
     export GenerateFileName
     export GenerateFolderName
+    export SaveFullResults
 
     include("Tests.jl")
+    export TestRegStratParameter
+    export SecondDerivative
+    export QuasiOptimality
     export TestRegStrat
 
 end

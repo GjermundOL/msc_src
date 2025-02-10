@@ -1,7 +1,7 @@
 name = "MasterTask"
 uuid = "ddb8c566-1a87-45d0-ac7d-58b9aec67b2a"
 authors = ["GjermundOL <gol1994@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
